@@ -15,6 +15,7 @@ body {
     border-radius: 15px;
     padding: 1rem;
     box-shadow: 0 4px 8px #00000033;
+    z-index: 10;
 }
 
 .card-header {
@@ -49,6 +50,18 @@ body {
     font-style: italic;
     text-shadow: 1px 1px 2px #000; 
 }
+
+.copyright {
+    position: fixed;
+    bottom: 10px;
+    right: 10px; 
+    font-size: 0.75rem;
+    color: #800080;
+    opacity: 0.6; 
+    text-align: right; 
+    z-index: 1;
+}
+
 
 h1, p {
     text-shadow: 2px 2px 4px #888888; 
