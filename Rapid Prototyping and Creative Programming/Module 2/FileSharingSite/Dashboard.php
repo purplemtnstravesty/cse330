@@ -26,19 +26,44 @@ if (!is_dir($user_dir)) {
     chown($user_dir, 'apache');
 }
 
+#file and directory deletion
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_file'])) {
+    $delete_target = basename($_POST['delete_file']);
+    $target_path = "$current_dir/$delete_target";
+
+    if (file_exists($target_path)) {
+        if (is_dir($target_path)) {
+            if (rmdir($target_path)) {
+                $message = "Directory deleted.";
+            } else {
+                $error = "Directory is not empty or cannot be deleted.";
+            }
+        } else {
+            unlink($target_path);
+            $message = "File deleted.";
+        }
+    } else {
+        $error = "File/Directory not found.";
+    }
+}
 
 #create new directory
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['new_dir'])) {
     $new_dir = basename($_POST['new_dir']);
-    if (pregmatch('/^[a-zA-Z0-9\-]+$/', $new_dir)) {
+    if (preg_match('/^[a-zA-Z0-9 _-]+$/', $new_dir)) {
         $new_dir_path = "$current_dir/$new_dir";
         if (!is_dir($new_dir_path)) {
             mkdir($new_dir_path, 0770);
             chown($new_dir_path, 'apache');
+            $message = "Directory created successfully.";
+        } else {
+            $error = "Failed to create directory. Check permissions.";
         }
     } else {
-        $error = "Invalid directory name.";
+        $error = "Directory already exists.";
     }
+} else {
+    $error = "Invalid directory name.";
 }
 
 #list files and directories

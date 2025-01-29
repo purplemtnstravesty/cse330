@@ -26,7 +26,7 @@ if (!preg_match('/^[a-zA-Z0-9_]+$/', $username)) {
 users.txt contains: jess, isa, bob
 Scenario 1:
 User enters: "jess"
-Result: Successful login, redirected to dashboard
+Result: Successful login, redirected to dashboard.php
 
 Scenario 2:
 User enters: "alice"
