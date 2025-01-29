@@ -1,79 +1,3 @@
-<!DOCTYPE html>
-<html lang = "en"> 
-<head> 
-<title>User login</title>
-<link rel="stylesheet" href="css/styles.css">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
-</head>
-</head>
-<body>
-<div class="container">
-    <div class="nav">
-        <!-- <div class="nav-options">
-            <input type="text" placeholder="Enter file name" </a>
-            <button tyle = "submit" name ="submit" value="submit">Search</button>
-        </div> -->
-        <!-- <div class="nav-options"> -->
-        <!-- <div class="dropdown">
-            <a class="active" href="#home">Profile<i class="fas fa-chevron-down arrow"></i></a>
-            <button class="dropbtn">Dropdown</button>
-            <div class="dropdown-links">
-                <a href="login.html">Log out</a>
-                <a href="#">Dropbox<i class="fas fa-link"></i></a>
-                <a href="#">OneDrive<i class="fas fa-link"></i></a>
-            </div>
-        </div>
-        </div> -->
-        <div class="nav-options">
-            <a href="login.html">Log out</a>
-        </div>
-    </div>
-    <div class="page">
-        <p1>All files</p1></i>
-            <!-- <a class="active" href="#home">Profile<i class="fas fa-chevron-down arrow"></i></a> -->
-        <div class="file-select">
-        <div class="dropdown">
-            <a class="active" href="#home">Create New <i class="fas fa-plus-circle"></i></a>
-            <!-- <button class="dropbtn">Dropdown</button> -->
-            <div class="dropdown-links">
-                <a href="#">New folder</a>
-                <a href="#">File upload</a>
-                <a href="#">Folder upload</a>
-            </div>
-        </div>
-        </div>
-            <!-- <button class="dropbtn">Dropdown</button>
-        <div class="dropdown-links">
-            <a href="login.html">Log out</a>
-            <a href="#">Dropbox<i class="fas fa-link"></i></a>
-            <a href="#">OneDrive<i class="fas fa-link"></i></a>
-        </div>
-    </div> -->
-
-        <p>DOCUMENT NAME</p>
-        <form action="/action_page.php">
-            <input type="file" id="myFile" name="filename">
-            <button tyle = "submit" name ="submit" value="submit">Upload file to...</button>
-            <button tyle = "submit" name ="submit" value="submit">Download</button>
-            <button tyle = "submit" name ="submit" value="submit">Delete file</button>
-          </form>
-    </div>
-</div>
-</body>
-</html>
-
-
-
-
-<!-- <select name="operations">
-    <option>None</option>
-    <option>Add</option>
-    <option>Subtract</option>
-    <option>Multiply</option>
-    <option>Divide</option>
-</select> -->
-
-
 <?php
 
 #checks if a user is logged in; if not, redirects to login page
@@ -174,3 +98,98 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['new_dir'])) {
 #list files and directories
 $items = array_diff(scandir($current_dir), ['.', '..']);
 ?>
+
+<!DOCTYPE html>
+<html lang = "en"> 
+<head> 
+<title>User login</title>
+<link rel="stylesheet" href="css/styles.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+</head>
+</head>
+<body>
+<div class="container">
+    <div class="nav">
+        <!-- <div class="nav-options">
+            <input type="text" placeholder="Enter file name" </a>
+            <button tyle = "submit" name ="submit" value="submit">Search</button>
+        </div> -->
+        <!-- <div class="nav-options"> -->
+        <!-- <div class="dropdown">
+            <a class="active" href="#home">Profile<i class="fas fa-chevron-down arrow"></i></a>
+            <button class="dropbtn">Dropdown</button>
+            <div class="dropdown-links">
+                <a href="login.html">Log out</a>
+                <a href="#">Dropbox<i class="fas fa-link"></i></a>
+                <a href="#">OneDrive<i class="fas fa-link"></i></a>
+            </div>
+        </div>
+        </div> -->
+        <div class="nav-options">
+            <a href="logout.php">Log out</a>
+        </div>
+    </div>
+    <div class="page">
+        <p1>All files</p1></i>
+            <!-- <a class="active" href="#home">Profile<i class="fas fa-chevron-down arrow"></i></a> -->
+        <div class="file-select">
+        <div class="dropdown">
+            <a class="active" href="#home">Create New <i class="fas fa-plus-circle"></i></a>
+            <!-- <button class="dropbtn">Dropdown</button> -->
+            <div class="dropdown-links">
+                <form action="dashboard.php" method="POST">
+                    <input type="text" name="new_dir" placeholder="New folder name" required>
+                    <button type="submit">Create Folder</button>
+                </form>
+                <!-- this will use the upload.php file to upload a file -->
+                <form action="upload.php" method="POST" enctype="multipart/form-data">
+                    <input type="file" name="file" required>
+                    <button type="submit">Upload File</button>
+                </form>
+            </div>
+        </div>
+        </div>
+            <!-- <button class="dropbtn">Dropdown</button>
+        <div class="dropdown-links">
+            <a href="login.html">Log out</a>
+            <a href="#">Dropbox<i class="fas fa-link"></i></a>
+            <a href="#">OneDrive<i class="fas fa-link"></i></a>
+        </div>
+    </div> -->
+
+        <p>DOCUMENT NAME</p>
+        <form action="/action_page.php">
+            <input type="file" id="myFile" name="filename">
+            <button tyle = "submit" name ="submit" value="submit">Upload file to...</button>
+            <button tyle = "submit" name ="submit" value="submit">Download</button>
+            <button tyle = "submit" name ="submit" value="submit">Delete file</button>
+          </form>
+          <!-- It might make sense to do a way to dynamically list all of a users files like this: -->
+           <h2>All Files</h2>
+           <ul>
+                <?php foreach ($items as $item): ?>
+                    <?php $item_path = "$current_dir/$item"; ?>
+                    <li>
+                        <?php if (is_dir($item_path)): ?>
+                        <!-- use this to navigate directories -->
+                         <!-- https://www.php.net/manual/en/function.urlencode.php -->
+                        <a href="dashboard.php?dir=<?php echo urlencode(str_replace($user_dir . '/', '', $item_path)); ?>">
+                            [Dir] <?php echo htmlspecialchars($item); ?>
+                        </a>
+                    <?php else: ?>
+                        <!-- https://www.php.net/manual/en/function.htmlspecialchars.php to read on htmlspecialchars-->
+                        <?php echo htmlspecialchars($item); ?>
+                        <a href="dashboard.php?download=<?php echo urlencode($item); ?>">Download</a>
+                        <form action="dashboard.php?dir=<?php echo urlencode(str_replace($user_dir . '/', '', $current_dir)); ?>" method="POST" style="display: inline;">
+                            <input type="hidden" name="delete_file" value="<?php echo htmlspecialchars($item); ?>">
+                            <button type="submit">Delete</button>
+                        </form>
+                    <?php endif; ?>
+                </li>
+            <?php endforeach; ?>
+        </ul>
+    </div>
+</div>
+</body>
+</html>
+
