@@ -86,13 +86,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['new_dir'])) {
             chown($new_dir_path, 'apache');
             $message = "Directory created successfully.";
         } else {
-            $error = "Failed to create directory. Check permissions.";
+            $error = "Failed to create folder. Check permissions.";
         }
     } else {
-        $error = "Directory already exists.";
+        $error = "Folder already exists.";
     }
 } else {
-    $error = "Invalid directory name.";
+    $error = "Invalid folder name.";
 }
 
 #list files and directories
