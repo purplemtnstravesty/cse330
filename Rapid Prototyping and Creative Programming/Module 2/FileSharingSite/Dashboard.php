@@ -1,3 +1,79 @@
+<!DOCTYPE html>
+<html lang = "en"> 
+<head> 
+<title>User login</title>
+<link rel="stylesheet" href="css/styles.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+</head>
+</head>
+<body>
+<div class="container">
+    <div class="nav">
+        <!-- <div class="nav-options">
+            <input type="text" placeholder="Enter file name" </a>
+            <button tyle = "submit" name ="submit" value="submit">Search</button>
+        </div> -->
+        <!-- <div class="nav-options"> -->
+        <!-- <div class="dropdown">
+            <a class="active" href="#home">Profile<i class="fas fa-chevron-down arrow"></i></a>
+            <button class="dropbtn">Dropdown</button>
+            <div class="dropdown-links">
+                <a href="login.html">Log out</a>
+                <a href="#">Dropbox<i class="fas fa-link"></i></a>
+                <a href="#">OneDrive<i class="fas fa-link"></i></a>
+            </div>
+        </div>
+        </div> -->
+        <div class="nav-options">
+            <a href="login.html">Log out</a>
+        </div>
+    </div>
+    <div class="page">
+        <p1>All files</p1></i>
+            <!-- <a class="active" href="#home">Profile<i class="fas fa-chevron-down arrow"></i></a> -->
+        <div class="file-select">
+        <div class="dropdown">
+            <a class="active" href="#home">Create New <i class="fas fa-plus-circle"></i></a>
+            <!-- <button class="dropbtn">Dropdown</button> -->
+            <div class="dropdown-links">
+                <a href="#">New folder</a>
+                <a href="#">File upload</a>
+                <a href="#">Folder upload</a>
+            </div>
+        </div>
+        </div>
+            <!-- <button class="dropbtn">Dropdown</button>
+        <div class="dropdown-links">
+            <a href="login.html">Log out</a>
+            <a href="#">Dropbox<i class="fas fa-link"></i></a>
+            <a href="#">OneDrive<i class="fas fa-link"></i></a>
+        </div>
+    </div> -->
+
+        <p>DOCUMENT NAME</p>
+        <form action="/action_page.php">
+            <input type="file" id="myFile" name="filename">
+            <button tyle = "submit" name ="submit" value="submit">Upload file to...</button>
+            <button tyle = "submit" name ="submit" value="submit">Download</button>
+            <button tyle = "submit" name ="submit" value="submit">Delete file</button>
+          </form>
+    </div>
+</div>
+</body>
+</html>
+
+
+
+
+<!-- <select name="operations">
+    <option>None</option>
+    <option>Add</option>
+    <option>Subtract</option>
+    <option>Multiply</option>
+    <option>Divide</option>
+</select> -->
+
+
 <?php
 
 #checks if a user is logged in; if not, redirects to login page
