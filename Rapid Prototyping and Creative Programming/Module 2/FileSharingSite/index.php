@@ -5,7 +5,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $username = trim($_POST['username']);
 
 #sanitize user input for username as security feature
-if (!preg_match('/^[a-zA-Z0-9_]+$/', $username)) {
+if (!ctype_alnum($username) || !preg_match('/^[a-zA-Z0-9_]+$/', $username)) {
     $error = "Invalid username format.";
 } else {
     #read the users.text file in private directory

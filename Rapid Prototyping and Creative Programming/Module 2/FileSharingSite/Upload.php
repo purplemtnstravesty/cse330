@@ -65,8 +65,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['file'])) {
     
 
 #file name is valid
-if (!ctype_alnum($username) || !preg_match('/^(?:[a-z0-9_-]|\.(?!\.))+$/iD', $file_name)) {
-    die("Bad username/filename");
+if (!preg_match('/^(?:[a-z0-9_-]|\.(?!\.))+$/iD', $file_name)) {
+    die("Bad filename");
 }
 #creates file in current directory
     $target_path = "$current_dir/$file_name";

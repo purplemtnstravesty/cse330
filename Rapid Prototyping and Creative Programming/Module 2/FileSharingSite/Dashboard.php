@@ -26,12 +26,41 @@ if (!is_dir($user_dir)) {
     chown($user_dir, 'apache');
 }
 
+#secure file download handling
+if (isset($_GET['download'])) {
+    $file = basename($_GET['download']); // basename() prevents directory traversal
+    $file_path = realpath("$current_dir/$file");
+
+    //Security check if the file is inside user's directory
+    if ($file_path !== false && strpos($file_path, realpath($user_dir)) === 0 && file_exists($file_path)) {
+        //set headers for file download
+        header("Content-Type: application/octet-stream");
+        header("Content-Disposition: attachment; filename=\"" . basename($file_path) . "\"");
+        readfile($file_path);
+        exit();
+    } else {
+        die("Unauthorized access.");
+    }
+}
+
 #file and directory deletion
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_file'])) {
     $delete_target = basename($_POST['delete_file']);
     $target_path = "$current_dir/$delete_target";
 
     if (file_exists($target_path)) {
+        /*added a fix to delete non-empty directories 
+        recursively delete all files and subdirectories before 
+        removing the directory itself.*/
+        function deleteDirectory($dir) { 
+            if (!is_dir($dir)) return;
+            $files = array_diff(scandir($dir), ['.', '..']);
+            foreach ($files as $file) {
+                $filePath = "$dir/$file";
+                is_dir($filePath) ? deleteDirectory($filePath) : unlink($filePath);
+            }
+            return rmdir($dir);
+        }
         if (is_dir($target_path)) {
             if (rmdir($target_path)) {
                 $message = "Directory deleted.";
