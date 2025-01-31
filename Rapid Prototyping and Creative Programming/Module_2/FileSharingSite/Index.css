@@ -6,6 +6,7 @@ body {
     height: 100vh;
     background-color: #f4f4f4;
 }
+
 .login-container {
     background: white;
     padding: 2rem;
@@ -14,9 +15,11 @@ body {
     width: 300px;
     text-align: center;
 }
+
 .login-container h2 {
     margin-bottom: 1rem;
 }
+
 .login-container input {
     width: 100%;
     padding: 10px;
@@ -24,6 +27,7 @@ body {
     border: 1px solid #ccc;
     border-radius: 5px;
 }
+
 .login-container button {
     background: #007bff;
     color: white;
@@ -33,9 +37,11 @@ body {
     cursor: pointer;
     border-radius: 5px;
 }
+
 .login-container button:hover {
     background: #0056b3;
 }
+
 .error {
     color: red;
     margin-top: 10px;

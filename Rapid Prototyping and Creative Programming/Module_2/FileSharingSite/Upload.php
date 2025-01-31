@@ -72,7 +72,7 @@ if (!preg_match('/^(?:[a-z0-9_-]|\.(?!\.))+$/iD', $file_name)) {
     $target_path = "$current_dir/$file_name";
 
     if (move_uploaded_file($_FILES['file']['tmp_name'], $target_path)) {
-        header('Location: dashboard.php?dir=' . urlencode(str_replace($user_dir . '/', '', $current_dir)));
+        header('Location: Dashboard.php?dir=' . urlencode(str_replace($user_dir . '/', '', $current_dir)));
     } else {
         echo "File upload failed.";
     }

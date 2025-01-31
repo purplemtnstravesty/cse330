@@ -1,5 +1,9 @@
 <?php
 
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+
+
 #checks if a user is logged in; if not, redirects to login page
 session_start();
 if (!isset($_SESSION['username'])) {
@@ -44,36 +48,56 @@ if (isset($_GET['download'])) {
 }
 
 #file and directory deletion
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_file'])) {
-    $delete_target = basename($_POST['delete_file']);
-    $target_path = "$current_dir/$delete_target";
-
-    if (file_exists($target_path)) {
-        /*added a fix to delete non-empty directories 
-        recursively delete all files and subdirectories before 
-        removing the directory itself.*/
-        function deleteDirectory($dir) { 
-            if (!is_dir($dir)) return;
-            $files = array_diff(scandir($dir), ['.', '..']);
-            foreach ($files as $file) {
-                $filePath = "$dir/$file";
-                is_dir($filePath) ? deleteDirectory($filePath) : unlink($filePath);
-            }
-            return rmdir($dir);
-        }
-        if (is_dir($target_path)) {
-            if (rmdir($target_path)) {
-                $message = "Directory deleted.";
+# add ability to handle bulk deletion
+// FIX: Ensure the deleteDirectory function is only declared once
+if (!function_exists('deleteDirectory')) {
+    function deleteDirectory($dir) {
+        if (!is_dir($dir)) return false;
+        $files = array_diff(scandir($dir), ['.', '..']);
+        foreach ($files as $file) {
+            $filePath = "$dir/$file";
+            if (is_dir($filePath)) {
+                deleteDirectory($filePath);
             } else {
-                $error = "Directory is not empty or cannot be deleted.";
+                if (!unlink($filePath)) {
+                    echo "<p style='color: red;'>Failed to delete file: $filePath</p>";
+                }
             }
-        } else {
-            unlink($target_path);
-            $message = "File deleted.";
+        }
+        return rmdir($dir);
+    }
+}
+
+// Handle bulk delete
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_selected'])) {
+    if (!empty($_POST['delete_items']) && is_array($_POST['delete_items'])) {
+        // process each selected item
+        foreach ($_POST['delete_items'] as $delete_target) {
+            //sanitize with basename() and validate path
+            $delete_target = basename($delete_target);
+            $target_path = "$current_dir/$delete_target";
+            // check if file or directory exists
+            if (file_exists($target_path)) {
+                //delete directory or file
+                if (is_dir($target_path)) {
+                    if (!deleteDirectory($target_path)) {
+                        echo "<p style='color: red;'>Failed to delete directory: $delete_target</p>";
+                    }
+                } else {
+                    if (!unlink($target_path)) {
+                        echo "<p style='color: red;'>Failed to delete file: $delete_target</p>";
+                    }
+                }
+            } else {
+                echo "<p style='color: red;'>File/Folder not found: $delete_target</p>";
+            }
         }
     } else {
-        $error = "File/Directory not found.";
+        echo "<p style='color: red;'>No files selected for deletion.</p>";
     }
+    // redirect after the loop
+    header("Location: dashboard.php?dir=" . urlencode(str_replace($user_dir . '/', '', $current_dir)));
+    exit();
 }
 
 #create new directory
@@ -100,96 +124,84 @@ $items = array_diff(scandir($current_dir), ['.', '..']);
 ?>
 
 <!DOCTYPE html>
-<html lang = "en"> 
+<html lang="en">
 <head> 
-<title>User login</title>
-<link rel="stylesheet" href="css/styles.css">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
-</head>
+    <title>Dashboard</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="Dashboard.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
 </head>
 <body>
-<div class="container">
-    <div class="nav">
-        <!-- <div class="nav-options">
-            <input type="text" placeholder="Enter file name" </a>
-            <button tyle = "submit" name ="submit" value="submit">Search</button>
-        </div> -->
-        <!-- <div class="nav-options"> -->
-        <!-- <div class="dropdown">
-            <a class="active" href="#home">Profile<i class="fas fa-chevron-down arrow"></i></a>
-            <button class="dropbtn">Dropdown</button>
-            <div class="dropdown-links">
-                <a href="login.html">Log out</a>
-                <a href="#">Dropbox<i class="fas fa-link"></i></a>
-                <a href="#">OneDrive<i class="fas fa-link"></i></a>
-            </div>
-        </div>
-        </div> -->
-        <div class="nav-options">
-            <a href="logout.php">Log out</a>
-        </div>
-    </div>
-    <div class="page">
-        <p1>All files</p1></i>
-            <!-- <a class="active" href="#home">Profile<i class="fas fa-chevron-down arrow"></i></a> -->
-        <div class="file-select">
-        <div class="dropdown">
-            <a class="active" href="#home">Create New <i class="fas fa-plus-circle"></i></a>
-            <!-- <button class="dropbtn">Dropdown</button> -->
-            <div class="dropdown-links">
-                <form action="dashboard.php" method="POST">
-                    <input type="text" name="new_dir" placeholder="New folder name" required>
-                    <button type="submit">Create Folder</button>
-                </form>
-                <!-- this will use the upload.php file to upload a file -->
-                <form action="upload.php" method="POST" enctype="multipart/form-data">
-                    <input type="file" name="file" required>
-                    <button type="submit">Upload File</button>
-                </form>
-            </div>
-        </div>
-        </div>
-            <!-- <button class="dropbtn">Dropdown</button>
-        <div class="dropdown-links">
-            <a href="login.html">Log out</a>
-            <a href="#">Dropbox<i class="fas fa-link"></i></a>
-            <a href="#">OneDrive<i class="fas fa-link"></i></a>
-        </div>
-    </div> -->
 
-        <p>DOCUMENT NAME</p>
-        <form action="/action_page.php">
-            <input type="file" id="myFile" name="filename">
-            <button tyle = "submit" name ="submit" value="submit">Upload file to...</button>
-            <button tyle = "submit" name ="submit" value="submit">Download</button>
-            <button tyle = "submit" name ="submit" value="submit">Delete file</button>
-          </form>
-          <!-- It might make sense to do a way to dynamically list all of a users files like this: -->
-           <h2>All Files</h2>
-           <ul>
+<div class="dashboard-container">
+    <div class="nav">
+        <h2>File Manager</h2>
+        <a href="Logout.php">Log out</a>
+    </div>
+
+    <h3>Current Directory: <?php echo htmlspecialchars(str_replace($user_dir, "", $current_dir)); ?></h3>
+    
+    <!-- Navigation (Go Back) -->
+    <?php if ($current_dir !== $user_dir): ?>
+        <a href="Dashboard.php?dir=<?php echo urlencode(dirname(str_replace($user_dir . '/', '', $current_dir))); ?>">
+            <button>⬅ Go Back</button>
+        </a>
+    <?php endif; ?>
+
+    <!-- Create Folder -->
+    <form action="Dashboard.php?dir=<?php echo urlencode(str_replace($user_dir . '/', '', $current_dir)); ?>" method="POST">
+        <input type="text" name="new_dir" placeholder="New folder name" required>
+        <button type="submit">Create Folder</button>
+    </form>
+
+    <!-- File Upload -->
+    <form action="Upload.php?dir=<?php echo urlencode(str_replace($user_dir . '/', '', $current_dir)); ?>" method="POST" enctype="multipart/form-data">
+        <input type="file" name="file" required>
+        <button type="submit">⬆ Upload File</button>
+    </form>
+
+    <!-- Bulk Delete Form -->
+    <form action="Dashboard.php" method="POST">
+        <h3>All Files</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Select</th>
+                    <th>Type</th>
+                    <th>Name</th>
+                </tr>
+            </thead>
+            <tbody>
                 <?php foreach ($items as $item): ?>
                     <?php $item_path = "$current_dir/$item"; ?>
-                    <li>
-                        <?php if (is_dir($item_path)): ?>
-                        <!-- use this to navigate directories -->
-                         <!-- https://www.php.net/manual/en/function.urlencode.php -->
-                        <a href="dashboard.php?dir=<?php echo urlencode(str_replace($user_dir . '/', '', $item_path)); ?>">
-                            [Dir] <?php echo htmlspecialchars($item); ?>
-                        </a>
-                    <?php else: ?>
-                        <!-- https://www.php.net/manual/en/function.htmlspecialchars.php to read on htmlspecialchars-->
-                        <?php echo htmlspecialchars($item); ?>
-                        <a href="dashboard.php?download=<?php echo urlencode($item); ?>">Download</a>
-                        <form action="dashboard.php?dir=<?php echo urlencode(str_replace($user_dir . '/', '', $current_dir)); ?>" method="POST" style="display: inline;">
-                            <input type="hidden" name="delete_file" value="<?php echo htmlspecialchars($item); ?>">
-                            <button type="submit">Delete</button>
-                        </form>
-                    <?php endif; ?>
-                </li>
-            <?php endforeach; ?>
-        </ul>
-    </div>
+                    <tr>
+                        <td>
+                            <input type="checkbox" name="delete_items[]" value="<?php echo htmlspecialchars($item); ?>">
+                        </td>
+                        <td>
+                            <?php if (is_dir($item_path)): ?>
+                                <i class="fas fa-folder folder-icon"></i>
+                            <?php else: ?>
+                                <i class="fas fa-file file-icon"></i>
+                            <?php endif; ?>
+                        </td>
+                        <td>
+                            <?php if (is_dir($item_path)): ?>
+                                <a href="Dashboard.php?dir=<?php echo urlencode(str_replace($user_dir . '/', '', $item_path)); ?>">
+                                    <?php echo htmlspecialchars($item); ?>
+                                </a>
+                            <?php else: ?>
+                                <?php echo htmlspecialchars($item); ?>
+                            <?php endif; ?>
+                        </td>
+                    </tr>
+                <?php endforeach; ?>
+            </tbody>
+        </table>
+        <button type="submit" name="delete_selected">Delete Selected</button>
+    </form>
 </div>
+
 </body>
 </html>
-

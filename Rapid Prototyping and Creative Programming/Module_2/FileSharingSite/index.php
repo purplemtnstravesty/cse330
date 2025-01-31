@@ -16,7 +16,7 @@ if (!ctype_alnum($username) || !preg_match('/^[a-zA-Z0-9_]+$/', $username)) {
     #Check if username exists in the file
     if (in_array($username, $users)) {
         $_SESSION['username'] = $username;
-        header('Location: dashboard.php');
+        header('Location: Dashboard.php');
         exit();
     } else {
         $error = "Username not found.";
@@ -40,7 +40,7 @@ Result: Error message "Username not found"*/
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login</title>
-    <link rel="stylesheet" href="SharingSiteStyles.css">
+    <link rel="stylesheet" href="Index.css">
     </head>
 <body>
 
