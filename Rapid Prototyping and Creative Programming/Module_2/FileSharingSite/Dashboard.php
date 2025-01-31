@@ -96,7 +96,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_selected'])) {
         echo "<p style='color: red;'>No files selected for deletion.</p>";
     }
     // redirect after the loop
-    header("Location: dashboard.php?dir=" . urlencode(str_replace($user_dir . '/', '', $current_dir)));
+    header("Location: Dashboard.php?dir=" . urlencode(str_replace($user_dir . '/', '', $current_dir)));
     exit();
 }
 
