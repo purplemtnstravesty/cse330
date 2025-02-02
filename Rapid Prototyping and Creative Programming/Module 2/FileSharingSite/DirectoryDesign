@@ -1,0 +1,25 @@
+/var/www/user_files/
+    ├── [username]/
+        ├── file1.txt
+        ├── subdir1/
+            ├── file2.txt
+        └── subdir2/
+            └── file3.txt
+
+
+Key Features:
+    Subdirectory Management
+        Can read, write, and execute files and folders
+            within their subdirectory
+        Users cannot read, write, or execute files and folders
+            outsite of their directories
+    Navigation
+        Can navigate into subdirectories and exit back to parent 
+            directory
+    Recursive File Handling
+        Upload, delete, download are directory aware
+    Enhanced Security
+        Prevent directory traversal attacks using realpath and basename
+        Validate and sanitize inputs for directories
+        
+    
