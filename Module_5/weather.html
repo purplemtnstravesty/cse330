@@ -28,21 +28,17 @@
             // Set up callback for when request completes
             xhr.onload = function() {
                 if (xhr.status === 200) {
-                    const weatherData = JSON.parse(xhr.responseText);
+                    const weatherData = JSON.parse(xhr.responseText);                    
                     
-                    // Update location (city in strong tag, followed by state)
                     document.querySelector('.weather-loc').innerHTML = 
-                        `<strong>${weatherData.location.city}</strong> ${weatherData.location.state}`;
+                        `<strong>${weatherData.location.city}</strong> ${weatherData.location.state}`;                    
                     
-                    // Update humidity
                     document.querySelector('.weather-humidity').textContent = 
-                        `Humidity: ${weatherData.atmosphere.humidity}%`;
+                        `Humidity: ${weatherData.atmosphere.humidity}%`;                    
                     
-                    // Update temperature (remove °F since it's already in the JSON)
                     document.querySelector('.weather-temp').textContent = 
                         `Temperature: ${weatherData.current.temp}`;
-                    
-                    // Update forecast images using Yahoo's weather image URLs
+                
                     document.querySelector('.weather-tomorrow').src = 
                         `http://us.yimg.com/i/us/nws/weather/gr/${weatherData.tomorrow.code}ds.png`;
                     
