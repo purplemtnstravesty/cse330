@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weather Widget</title>
+    <link rel="stylesheet" href="https://classes.engineering.wustl.edu/cse330/content/weather.css">
+</head>
+<body>
+    <div class="weather" id="weatherWidget">
+        <div class="weather-loc"></div>
+        <div class="weather-humidity"></div>
+        <div class="weather-temp"></div>
+        <img class="weather-tomorrow" alt="Tomorrow's weather" />
+        <img class="weather-dayaftertomorrow" alt="Day after tomorrow's weather" />
+    </div>
+    
+    <button onclick="fetchWeather()">Update Weather</button>
+
+    <script>
+        function fetchWeather() {
+            // Create new AJAX request
+            const xhr = new XMLHttpRequest();
+            
+            // Configure the request
+            xhr.open('GET', 'https://classes.engineering.wustl.edu/cse330/content/weather_json.php', true);
+            
+            // Set up callback for when request completes
+            xhr.onload = function() {
+                if (xhr.status === 200) {
+                    const weatherData = JSON.parse(xhr.responseText);
+                    
+                    // Update location (city in strong tag, followed by state)
+                    document.querySelector('.weather-loc').innerHTML = 
+                        `<strong>${weatherData.location.city}</strong> ${weatherData.location.state}`;
+                    
+                    // Update humidity
+                    document.querySelector('.weather-humidity').textContent = 
+                        `Humidity: ${weatherData.atmosphere.humidity}%`;
+                    
+                    // Update temperature (remove °F since it's already in the JSON)
+                    document.querySelector('.weather-temp').textContent = 
+                        `Temperature: ${weatherData.current.temp}`;
+                    
+                    // Update forecast images using Yahoo's weather image URLs
+                    document.querySelector('.weather-tomorrow').src = 
+                        `http://us.yimg.com/i/us/nws/weather/gr/${weatherData.tomorrow.code}ds.png`;
+                    
+                    document.querySelector('.weather-dayaftertomorrow').src = 
+                        `http://us.yimg.com/i/us/nws/weather/gr/${weatherData.dayafter.code}ds.png`;
+                }
+            };
+            
+            // Send the request
+            xhr.send();
+        }
+
+        // Bind fetchWeather to DOMContentLoaded event
+        document.addEventListener("DOMContentLoaded", fetchWeather, false);
+    </script>
+</body>
+</html> 
