@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Java Script Calculator</title>
+    <style>
+        .calculator {
+            max-width: 400px;
+            margin: 20px auto;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        input[type="number"] {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        .operations {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .operations label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .result {
+            font-size: 1.2em;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="calculator">
+        <h1>Simple Calculator</h1>
+        <div class="input-group">
+            <input type="number" id="num1" placeholder="Enter first number">
+            <input type="number" id="num2" placeholder="Enter second number">
+        </div>
+        
+        <div class="operations">
+            <label>
+                <input type="radio" name="operation" value="add" checked>
+                Addition (+)
+            </label>
+            <label>
+                <input type="radio" name="operation" value="subtract">
+                Subtraction (-)
+            </label>
+            <label>
+                <input type="radio" name="operation" value="multiply">
+                Multiplication (×)
+            </label>
+            <label>
+                <input type="radio" name="operation" value="divide">
+                Division (÷)
+            </label>
+        </div>
+
+        <div class="result">
+            <p>Result: <span id="result">0</span></p>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            
+            const num1Input = document.getElementById('num1');
+            const num2Input = document.getElementById('num2');
+            const resultSpan = document.getElementById('result');
+            const radioButtons = document.getElementsByName('operation');
+
+            
+            function calculate() {
+                const num1 = parseFloat(num1Input.value) || 0;
+                const num2 = parseFloat(num2Input.value) || 0;
+                let result = 0;
+
+                
+                const selectedOperation = Array.from(radioButtons).find(radio => radio.checked).value;
+
+                
+                switch(selectedOperation) {
+                    case 'add':
+                        result = num1 + num2;
+                        break;
+                    case 'subtract':
+                        result = num1 - num2;
+                        break;
+                    case 'multiply':
+                        result = num1 * num2;
+                        break;
+                    case 'divide':
+                        result = num2 !== 0 ? num1 / num2 : 'Cannot divide by zero';
+                        break;
+                }
+
+                
+                resultSpan.textContent = typeof result === 'number' ? result.toFixed(2) : result;
+            }
+
+            
+            num1Input.addEventListener('input', calculate);
+            num2Input.addEventListener('input', calculate);
+            
+            
+            radioButtons.forEach(radio => {
+                radio.addEventListener('change', calculate);
+            });
+        });
+    </script>
+</body>
+</html> 
