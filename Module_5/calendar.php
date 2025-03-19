@@ -1215,6 +1215,7 @@ $year = isset($_GET['year']) ? intval($_GET['year']) : intval(date('Y'));
             });
         }
 
+        // Make sure this function is actually adding tags to the array
         function addTagChip(tag) {
             const tagsList = document.getElementById('event-tags-list');
             
