@@ -643,6 +643,84 @@ $year = isset($_GET['year']) ? intval($_GET['year']) : intval(date('Y'));
         let selectedTags = []; // Will store selected tags for current event
         let currentTagFilter = ''; // Current tag filter
         
+        document.getElementById("event-tags").addEventListener("keydown", function(e) {
+            if (e.key === "Enter" || e.key === ",") {
+                e.preventDefault();
+                const tag = this.value.trim();
+                if (tag && !selectedTags.includes(tag)) {
+                    selectedTags.push(tag);
+                    addTagChip(tag); // Visually add tag to UI
+                }
+                this.value = ""; // Clear input field
+            }
+        });
+
+        function addTagChip(tag) {
+            const tagList = document.getElementById("event-tags-list");
+            const chip = document.createElement("span");
+            chip.className = "tag-chip";
+            chip.textContent = tag;
+
+            const removeButton = document.createElement("span");
+            removeButton.className = "remove-tag";
+            removeButton.textContent = " ×";
+            removeButton.onclick = function() {
+                selectedTags = selectedTags.filter(t => t !== tag);
+                chip.remove();
+            };
+
+            chip.appendChild(removeButton);
+            tagList.appendChild(chip);
+        }
+
+        // Initialize shared user input
+        document.getElementById("shared-users").addEventListener("keydown", function(e) {
+            if (e.key === "Enter" || e.key === ",") {
+                e.preventDefault();
+                const username = this.value.trim();
+                if (username) {
+                    fetch(`get_users.php?username=${username}`)
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.error) {
+                                alert("User not found");
+                            } else {
+                                const user = data.user;
+                                if (!selectedSharedUsers.some(u => u.user_id === user.user_id)) {
+                                    selectedSharedUsers.push(user);
+                                    addUserChip(user);
+                                }
+                            }
+                        });
+                }
+                this.value = ""; // Clear input field
+            }
+        });
+
+        function addUserChip(user) {
+            const userList = document.getElementById("shared-users-list");
+            const chip = document.createElement("span");
+            chip.className = "shared-user-chip";
+            chip.textContent = user.username;
+
+            const removeButton = document.createElement("span");
+            removeButton.className = "remove-user";
+            removeButton.textContent = " ×";
+            removeButton.onclick = function() {
+                selectedSharedUsers = selectedSharedUsers.filter(u => u.user_id !== user.user_id);
+                chip.remove();
+            };
+
+            chip.appendChild(removeButton);
+            userList.appendChild(chip);
+        }
+
+        // Debugging: Check values before saving
+        document.getElementById("save-event-btn").addEventListener("click", function() {
+            console.log("Selected Tags Before Saving:", selectedTags);
+            console.log("Selected Shared Users Before Saving:", selectedSharedUsers);
+        });
+
         // Add this function to fetch all users
         function fetchUsers() {
             fetch('get_users.php')
