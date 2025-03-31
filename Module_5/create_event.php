@@ -24,6 +24,7 @@ try {
     $event_description = isset($data['event_description']) ? trim($data['event_description']) : NULL;
     $event_datetime = $data['event_datetime'];
     $tags = isset($data['tags']) ? $data['tags'] : []; // Tags array
+    $shared_with = isset($data['shared_with']) ? $data['shared_with'] : []; // Shared with users array
 
     // Start transaction
     $mysqli->begin_transaction();
@@ -52,6 +53,21 @@ try {
             $stmt->bind_param("is", $event_id, $tag);
             if (!$stmt->execute()) {
                 throw new Exception('Failed to insert tag: ' . $tag);
+            }
+        }
+        $stmt->close();
+    }
+
+    if (!empty($shared_with)) {
+        $query_shared = "INSERT INTO SharedEvents (event_id, shared_user_id) VALUES (?, ?)";
+        $stmt = $mysqli->prepare($query_shared);
+        if (!$stmt) {
+            throw new Exception('Failed to prepare shared event insert statement');
+        }
+        foreach ($shared_with as $shared_user_id) {
+            $stmt->bind_param("ii", $event_id, $shared_user_id);
+            if (!$stmt->execute()) {
+                throw new Exception('Failed to share event with user: ' . $shared_user_id);
             }
         }
         $stmt->close();
