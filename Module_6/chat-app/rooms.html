@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multi-Room Chat</title>
+    <!-- Using Water.css for basic styling -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/water.css@2/out/dark.css">
+    <style>
+        body { max-width: 900px; margin: auto; padding: 1rem; }
+        #chat-area { display: flex; gap: 1rem; margin-top: 1rem; flex-wrap: wrap;}
+        #room-info { flex: 1; min-width: 200px; }
+        #chat-log-container { flex: 3; min-width: 300px; border: 1px solid gray; padding: 0.5rem; height: 400px; overflow-y: scroll; display: flex; flex-direction: column-reverse;}
+        #chat-log { margin-top: auto; } /* Pushes messages to bottom */
+        #chat-log p { margin: 0.3rem 0; word-wrap: break-word; }
+        #chat-log .system-message { font-style: italic; color: #aaa; }
+        #chat-log .pm-message { color: #aadeff; } /* Style for PMs */
+        #user-list li, #room-list li { cursor: pointer; margin-bottom: 0.2rem; }
+        #user-list li:hover, #room-list li:hover { background-color: #444; }
+        #user-list button { font-size: 0.7em; padding: 0.1em 0.3em; margin-left: 0.5em; cursor: pointer;}
+        #status { margin-top: 0.5rem; color: orange; min-height: 1.2em;}
+        .input-group { display: flex; gap: 0.5rem; margin-top: 0.5rem; }
+        .input-group input { flex-grow: 1; }
+        .hidden { display: none; } /* Utility class */
+        mark { background-color: yellow; color: black; padding: 0.1em;} /* Highlight creator */
+    </style>
+    <!-- Include Socket.IO client library -->
+    <script src="/socket.io/socket.io.js"></script>
+</head>
+<body>
+
+    <h1>Multi-Room Chat</h1>
+
+    <!-- Status Area -->
+    <div id="status">Connecting...</div>
+
+    <!-- Username Setup -->
+    <div id="username-setup">
+        <label for="username-input">Set Your Username:</label>
+        <div class="input-group">
+            <input type="text" id="username-input" placeholder="Enter username (1-20 chars)">
+            <button onclick="setUsername()">Set Username</button>
+        </div>
+    </div>
+
+    <hr>
+
+    <!-- Room Management -->
+    <div id="room-management">
+        <h2>Rooms</h2>
+        <div id="create-room-section">
+            <label for="room-name-input">Create New Room:</label>
+            <div class="input-group">
+                <input type="text" id="room-name-input" placeholder="Room Name (1-30 chars)">
+                <input type="password" id="room-password-input" placeholder="Optional Password">
+                <button onclick="createRoom()">Create</button>
+            </div>
+        </div>
+
+        <h3>Available Rooms:</h3>
+        <ul id="room-list">
+            <!-- Room list will be populated dynamically -->
+            <li>Loading rooms...</li>
+        </ul>
+    </div>
+
+    <hr>
+
+    <!-- Chat Area (Visible after joining a room) -->
+    <div id="chat-area" class="hidden">
+        <div id="room-info">
+            <h2 id="current-room-name"></h2>
+            <h3>Users in Room:</h3>
+            <ul id="user-list"></ul>
+        </div>
+        <div id="chat-log-container">
+             <div id="chat-log">
+                 <!-- Messages will appear here -->
+             </div>
+        </div>
+
+    </div>
+     <!-- Message Input (Visible after joining a room) -->
+     <div id="message-input-area" class="hidden">
+        <div class="input-group">
+            <input type="text" id="message-input" placeholder="Type your message...">
+            <button onclick="sendMessage()">Send</button>
+            <button id="cancel-pm-button" class="hidden" onclick="cancelPM()">Cancel PM</button>
+        </div>
+    </div>
+
+
+    <!-- Client-side JavaScript -->
+    <script>
+        const socket = io();
+
+        // DOM Elements
+        const usernameSetupDiv = document.getElementById('username-setup');
+        const usernameInput = document.getElementById('username-input');
+        const roomManagementDiv = document.getElementById('room-management');
+        const roomNameInput = document.getElementById('room-name-input');
+        const roomPasswordInput = document.getElementById('room-password-input');
+        const roomListUl = document.getElementById('room-list');
+        const chatAreaDiv = document.getElementById('chat-area');
+        const messageInputAreaDiv = document.getElementById('message-input-area');
+        const currentRoomNameH2 = document.getElementById('current-room-name');
+        const userListUl = document.getElementById('user-list');
+        const chatLogDiv = document.getElementById('chat-log');
+        const messageInput = document.getElementById('message-input');
+        const statusDiv = document.getElementById('status');
+        const cancelPmButton = document.getElementById('cancel-pm-button');
+
+
+        // Client State
+        let currentUsername = '';
+        let currentRoom = null;
+        let isCreator = false;
+        let pmTargetUsername = null; // Track who the user is trying to PM
+
+        // --- Utility Functions ---
+        function displayStatus(message, isError = false) {
+            statusDiv.textContent = message;
+            statusDiv.style.color = isError ? 'red' : 'orange';
+        }
+
+        function appendChatMessage(htmlContent) {
+            const messageElement = document.createElement('div');
+            messageElement.innerHTML = htmlContent; // Use innerHTML to allow basic formatting
+            chatLogDiv.prepend(messageElement); // Prepend to keep newest at bottom with CSS flex-direction: column-reverse;
+        }
+
+        function clearChat() {
+            chatLogDiv.innerHTML = '';
+        }
+
+        function sanitize(text) {
+            // Basic sanitization to prevent HTML injection
+            const temp = document.createElement('div');
+            temp.textContent = text;
+            return temp.innerHTML;
+        }
+
+        // --- UI Update Functions ---
+        function showChatUI(show) {
+            chatAreaDiv.classList.toggle('hidden', !show);
+            messageInputAreaDiv.classList.toggle('hidden', !show);
+             if (!show) {
+                currentRoomNameH2.textContent = '';
+                userListUl.innerHTML = '';
+                clearChat();
+                cancelPM(); // Ensure PM mode is off when leaving/hiding chat
+            }
+        }
+
+         function updateRoomList(rooms) {
+            roomListUl.innerHTML = ''; // Clear previous list
+            if (rooms.length === 0) {
+                roomListUl.innerHTML = '<li>No rooms available. Create one!</li>';
+                return;
+            }
+            rooms.forEach(room => {
+                const li = document.createElement('li');
+                li.textContent = `${room.name} ${room.isPrivate ? ' (Private)' : ''}`;
+                li.onclick = () => joinRoom(room.name, room.isPrivate);
+                roomListUl.appendChild(li);
+            });
+        }
+
+         function updateUserList(usernames) {
+            userListUl.innerHTML = '';
+            usernames.forEach(username => {
+                const li = document.createElement('li');
+                 // Sanitize username before displaying
+                const sanitizedUsername = sanitize(username);
+
+                let userHtml = sanitizedUsername;
+                if (username === currentUsername) {
+                     userHtml += " (You)";
+                 }
+                 // Highlight if this user is the creator and viewing their own room
+                 // We need to know if the *current client* is the creator, stored in `isCreator`
+                 // And if the listed username belongs to the creator (server should perhaps send creator's username?)
+                 // Simplified: We'll just highlight the client if *they* are the creator.
+                 if (username === currentUsername && isCreator) {
+                     userHtml = `<mark>${userHtml}</mark>`;
+                 }
+                 li.innerHTML = userHtml; // Use innerHTML because of potential <mark>
+
+                // Add PM click handler (don't target self)
+                if (username !== currentUsername) {
+                     li.onclick = () => selectUserForPM(username);
+                 }
+
+
+                // Add Kick/Ban buttons if the current user is the creator and the list item is not for themselves
+                if (isCreator && username !== currentUsername) {
+                    const kickButton = document.createElement('button');
+                    kickButton.textContent = 'Kick';
+                    kickButton.onclick = (event) => {
+                        event.stopPropagation(); // Prevent triggering PM select
+                        if (confirm(`Kick ${username}?`)) {
+                             socket.emit('kick_user', { username: username });
+                         }
+                    };
+
+                    const banButton = document.createElement('button');
+                    banButton.textContent = 'Ban';
+                    banButton.onclick = (event) => {
+                        event.stopPropagation(); // Prevent triggering PM select
+                        if (confirm(`Permanently BAN ${username}?`)) {
+                            socket.emit('ban_user', { username: username });
+                        }
+                    };
+                    li.appendChild(kickButton);
+                    li.appendChild(banButton);
+                }
+                userListUl.appendChild(li);
+            });
+        }
+
+        // --- Socket Event Handlers ---
+        socket.on('connect', () => {
+            displayStatus('Connected. Please set your username.');
+        });
+
+        socket.on('disconnect', () => {
+            displayStatus('Disconnected from server.', true);
+            showChatUI(false);
+            currentRoom = null;
+            isCreator = false;
+        });
+
+        socket.on('your_info', (data) => {
+             currentUsername = data.username;
+             usernameInput.value = currentUsername; // Pre-fill input
+         });
+
+        socket.on('username_set', (data) => {
+            if (data.success) {
+                currentUsername = data.username;
+                usernameSetupDiv.classList.add('hidden'); // Hide setup once username is set
+                displayStatus(`Username set to: ${currentUsername}`);
+            } else {
+                displayStatus(data.message, true);
+            }
+        });
+
+        socket.on('update_rooms', updateRoomList);
+
+        socket.on('room_created', (data) => {
+             if (data.success) {
+                displayStatus(`Room '${data.roomName}' created. You are the creator.`);
+                currentRoom = data.roomName;
+                isCreator = data.isCreator; // Should be true here
+                currentRoomNameH2.textContent = `Room: ${data.roomName}`;
+                clearChat();
+                showChatUI(true);
+                appendChatMessage(`<p class="system-message">Welcome to '${data.roomName}'!</p>`);
+             }
+             // No else needed, server sends 'create_error' for failures
+         });
+
+         socket.on('create_error', (data) => displayStatus(data.message, true));
+         socket.on('join_error', (data) => displayStatus(data.message, true));
+         socket.on('kick_error', (data) => displayStatus(data.message, true));
+         socket.on('ban_error', (data) => displayStatus(data.message, true));
+         socket.on('chat_error', (data) => displayStatus(data.message, true));
+         socket.on('pm_error', (data) => displayStatus(data.message, true));
+
+
+         socket.on('join_success', (data) => {
+             displayStatus(`Joined room: ${data.roomName}`);
+             currentRoom = data.roomName;
+             isCreator = data.isCreator; // Server tells us if we are creator
+             currentRoomNameH2.textContent = `Room: ${data.roomName}`;
+             clearChat();
+             showChatUI(true);
+             appendChatMessage(`<p class="system-message">You joined '${data.roomName}'.</p>`);
+             // User list will be updated via 'update_users' event shortly after join
+         });
+
+
+        socket.on('update_users', updateUserList);
+
+        socket.on('user_joined', (data) => {
+             appendChatMessage(`<p class="system-message">${sanitize(data.username)} joined the room.</p>`);
+         });
+
+         socket.on('user_left', (data) => {
+             appendChatMessage(`<p class="system-message">${sanitize(data.username)} left the room.</p>`);
+              // If the user leaving was our PM target, cancel PM mode
+             if (data.username === pmTargetUsername) {
+                 cancelPM();
+             }
+         });
+
+         socket.on('user_kicked', (data) => {
+             appendChatMessage(`<p class="system-message">${sanitize(data.kickedUsername)} was kicked by ${sanitize(data.kickerUsername)}.</p>`);
+             if (data.kickedUsername === pmTargetUsername) {
+                 cancelPM();
+             }
+         });
+
+         socket.on('user_banned', (data) => {
+             appendChatMessage(`<p class="system-message">${sanitize(data.bannedUsername)} was BANNED by ${sanitize(data.bannerUsername)}.</p>`);
+              if (data.bannedUsername === pmTargetUsername) {
+                 cancelPM();
+             }
+         });
+
+         socket.on('kicked', (data) => {
+            const banMsg = data.banned ? " and BANNED" : "";
+            alert(`You were kicked${banMsg} from room '${data.roomName}' by ${data.kicker}.`);
+            showChatUI(false);
+            currentRoom = null;
+            isCreator = false;
+            displayStatus(`Kicked from ${data.roomName}.`);
+         });
+
+
+        socket.on('chat_message', (data) => {
+             appendChatMessage(`<p><strong>${sanitize(data.username)}:</strong> ${sanitize(data.message)}</p>`);
+         });
+
+         socket.on('private_message', (data) => {
+             appendChatMessage(`<p class="pm-message"><em>[PM from ${sanitize(data.fromUsername)}]:</em> ${sanitize(data.message)}</p>`);
+         });
+
+         socket.on('pm_sent', (data) => {
+             appendChatMessage(`<p class="pm-message"><em>[PM to ${sanitize(data.toUsername)}]:</em> ${sanitize(data.message)}</p>`);
+         });
+
+
+        // --- UI Event Handlers ---
+        function setUsername() {
+            const username = usernameInput.value;
+            socket.emit('set_username', username);
+        }
+
+        function createRoom() {
+            const roomName = roomNameInput.value;
+            const password = roomPasswordInput.value;
+            if (!roomName) {
+                displayStatus("Please enter a room name.", true);
+                return;
+            }
+            socket.emit('create_room', { roomName: roomName, password: password });
+            // Clear inputs after attempt
+            roomNameInput.value = '';
+            roomPasswordInput.value = '';
+        }
+
+        function joinRoom(roomName, isPrivate) {
+             if (currentRoom === roomName) {
+                displayStatus(`You are already in room '${roomName}'.`);
+                return;
+            }
+
+            let password = null;
+            if (isPrivate) {
+                password = prompt(`Enter password for private room '${roomName}':`);
+                if (password === null) return; // User cancelled prompt
+            }
+            socket.emit('join_room', { roomName: roomName, password: password });
+        }
+
+        function sendMessage() {
+            const message = messageInput.value;
+            if (!message.trim()) return;
+
+            if (pmTargetUsername) {
+                // Sending a Private Message
+                socket.emit('private_message', { toUsername: pmTargetUsername, message: message });
+            } else {
+                // Sending a public chat message
+                socket.emit('chat_message', { message: message });
+            }
+
+            messageInput.value = ''; // Clear input field
+        }
+
+        // Add event listener for Enter key in message input
+        messageInput.addEventListener('keypress', function(event) {
+            if (event.key === 'Enter') {
+                 event.preventDefault(); // Prevent default form submission/newline
+                 sendMessage();
+            }
+        });
+
+        function selectUserForPM(username) {
+             if (username === currentUsername) return; // Can't PM self
+             pmTargetUsername = username;
+             messageInput.placeholder = `Private message to ${username}... (click user again or Cancel PM to stop)`;
+             cancelPmButton.classList.remove('hidden');
+             displayStatus(`Ready to send PM to ${username}.`);
+             // Optional: Style the selected user in the list
+         }
+
+        function cancelPM() {
+            pmTargetUsername = null;
+            messageInput.placeholder = "Type your message...";
+            cancelPmButton.classList.add('hidden');
+            displayStatus('Cancelled Private Message mode.');
+            // Optional: Remove styling from user list
+        }
+
+        // --- Initial Load ---
+        showChatUI(false); // Hide chat initially
+
+    </script>
+
+</body>
+</html>
